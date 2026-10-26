@@ -5,6 +5,22 @@ app = Flask(__name__)
 def index():
     return render_template('register.html')
 
+@app.route('/registro')
+def registro():
+    return render_template('register.html')
+
+@app.route('/login')
+def login():
+    return render_template('register.html')
+
+@app.route('/')
+def nuevo():
+    return render_template('nueva.html')
+
+@app.route('/')
+def index():
+    return render_template('editar.html')
+
 
 
 if __name__ == "__main__":
