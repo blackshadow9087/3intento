@@ -4,6 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>Editar misión</title>
 </head>
 <body>
@@ -14,13 +15,12 @@
         <button type="button" onclick="location.href='/'">
             Volver
         </button>
+  
 
-        <button type="button" onclick="location.href='/cerrar_sesion'">
+        <button type="button" onclick="location.href='/cerrar-sesion'">
             Cerrar sesión
         </button>
     </div>
-
-    <br>
 
     <form action="{{ url_for('editar', id=edicion.id) }}" method="post">
 

@@ -5,16 +5,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='style.css') }}">
-
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>Registro e inicio de sesión</title>
 </head>
 
 <body>
 
-    <main class="contenedor">
 
+    <div class="registro">
+        <main class="contenedor">
         <!-- FORMULARIO DE REGISTRO -->
         <section class="registro">
             <h1>Crear cuenta</h1>
@@ -43,36 +42,13 @@
 
                 <p>
                     ¿Ya tienes cuenta?
-                    <a href="{{ url_for('index') }}">Inicia sesión</a>
+                    <a href="{{ url_for('iniciar_sesion.html') }}">Inicia sesión</a>
                 </p>
 
             </form>
-        </section>
-
-
-
-        <!-- FORMULARIO DE INICIO DE SESIÓN -->
-        <section class="login">
-            <h1>Iniciar sesión</h1>
-
-            <form action="{{ url_for('index') }}" method="POST">
-
-                <label for="correo-login">Correo electrónico:</label>
-                <input type="email" id="correo-login"
-                       name="correo" required>
-
-                <label for="password-login">Contraseña:</label>
-                <input type="password" id="password-login"
-                       name="password" required>
-
-                <button type="submit">Iniciar sesión</button>
-
-                <p>
-                    ¿No tienes cuenta?
-                    <a href="{{ url_for('registro') }}">Regístrate aquí</a>
-                </p>
-            </form>
-        </section>
     </main>
+
+    </div>
+   
 </body>
 </html>

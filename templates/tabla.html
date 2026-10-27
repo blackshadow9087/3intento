@@ -5,13 +5,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
     <title>Tabla de viajes</title>
 </head>
 
 <body>
-
     <header>
         <h1>Lista de viajes</h1>
+        
+        <button type="button" onclick="location.href='/cerrar-sesion'">
+            Cerrar sesión
+        </button>
 
         <div id="botones">
             <button type="button"

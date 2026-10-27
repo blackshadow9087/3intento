@@ -3,7 +3,6 @@ from mysql.connector import IntegrityError
 
 from conexion import consultar_uno, ejecutar
 
-
 class Usuario:
     def __init__(self, nombre, apellido, correo, password=None, usuario_id=None):
         self.id = usuario_id
@@ -79,8 +78,8 @@ class Usuario:
         )      
         
         
-if __name__ == "__main__":
-    app.run(debug=True)
+    if __name__ == "__main__":
+        app.run(debug=True) 
         
   
         

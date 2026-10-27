@@ -8,7 +8,7 @@ def obtener_conexion():
         conexion = mysql.connector.connect(
             host="localhost",
             user="root",
-            password="",  # Escribe aquí tu contraseña de MySQL
+            password="root",  # Escribe aquí tu contraseña de MySQL
             database="sistema_misiones"
         )
 

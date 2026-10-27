@@ -1,25 +1,21 @@
-
 from datetime import date
 from functools import wraps
 import os
 
-from flask import (
-    Flask, render_template, request, redirect,
-    url_for, session, flash
-)
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-from mysql.connector import IntegrityError
+from mysql.connector import IntegrityError, Error
 
-from conexion import consultar_uno, consultar_todos, ejecutar
+from mysqlconnection import consultar_uno, consultar_todos, ejecutar
+
 
 app = Flask(__name__)
 app.secret_key = os.getenv(
-    "SECRET_KEY",
-    "cambia-esta-clave-en-produccion"
+    "FLASK_SECRET_KEY",
+    "cambia-esta-clave-en-tu-proyecto"
 )
 
-
-# Verifica que el usuario haya iniciado sesión
+# Verificar si el usuario inició sesión
 def iniciar_sesion_requerido(funcion):
     @wraps(funcion)
     def envoltura(*args, **kwargs):
@@ -30,9 +26,10 @@ def iniciar_sesion_requerido(funcion):
     return envoltura
 
 
-# Busca una misión en MySQL
+# Obtener una misión
 def obtener_mision(mision_id):
-    return consultar_uno("""
+    return consultar_uno(
+        """
         SELECT m.*,
                CONCAT(u.nombre, ' ', u.apellido) AS lider,
                u.id AS lider_id,
@@ -42,17 +39,17 @@ def obtener_mision(mision_id):
         FROM misiones m
         JOIN usuarios u ON u.id = m.lider_id
         WHERE m.id = %s
-    """, (mision_id,))
+        """,
+        (mision_id,)
+    )
 
 
-# Valida los datos de una misión
+# Validar los datos de una misión
 def validar_mision(formulario):
     nombre = formulario.get("nombre", "").strip()
     fecha_texto = formulario.get("fecha", "").strip()
     descripcion = formulario.get("descripcion", "").strip()
-    cantidad_texto = formulario.get(
-        "voluntarios_necesarios", ""
-    ).strip()
+    cantidad_texto = formulario.get("voluntarios_necesarios", "").strip()
 
     if not nombre or not fecha_texto or not descripcion or not cantidad_texto:
         return None, "Completa todos los campos."
@@ -61,7 +58,7 @@ def validar_mision(formulario):
         fecha_mision = date.fromisoformat(fecha_texto)
         cantidad = int(cantidad_texto)
     except ValueError:
-        return None, "La fecha o la cantidad no son válidas."
+        return None, "La fecha o la cantidad de voluntarios no son válidas."
 
     if fecha_mision < date.today():
         return None, "La fecha no puede estar en el pasado."
@@ -75,11 +72,12 @@ def validar_mision(formulario):
     return (nombre, fecha_mision, cantidad, descripcion), None
 
 
-# Inicio de sesión
+# INICIAR SESIÓN
+# Esta es la única función index y la única ruta /
 @app.route("/", methods=["GET", "POST"])
 def index():
     if "usuario_id" in session:
-        return redirect(url_for("dashboard"))
+        return render_template('dashboard.html')
 
     if request.method == "POST":
         correo = request.form.get("correo", "").strip().lower()
@@ -97,7 +95,7 @@ def index():
             )
         ):
             flash("Correo o contraseña incorrectos.", "error")
-            return render_template("index.html")
+            return render_template("register.html")
 
         session.clear()
         session["usuario_id"] = usuario["id"]
@@ -105,10 +103,10 @@ def index():
 
         return redirect(url_for("dashboard"))
 
-    return render_template("index.html")
+    return render_template("iniciar_sesion.html")
 
 
-# Registro de usuarios
+# REGISTRO DE USUARIOS
 @app.route("/registro", methods=["GET", "POST"])
 def registro():
     if request.method == "POST":
@@ -132,16 +130,19 @@ def registro():
 
         else:
             try:
-                ejecutar("""
+                ejecutar(
+                    """
                     INSERT INTO usuarios
-                    (nombre, apellido, correo, password_hash)
+                        (nombre, apellido, correo, password_hash)
                     VALUES (%s, %s, %s, %s)
-                """, (
-                    nombre,
-                    apellido,
-                    correo,
-                    generate_password_hash(password)
-                ))
+                    """,
+                    (
+                        nombre,
+                        apellido,
+                        correo,
+                        generate_password_hash(password)
+                    )
+                )
 
                 flash("Cuenta creada. Ahora puedes iniciar sesión.", "ok")
                 return redirect(url_for("index"))
@@ -149,14 +150,21 @@ def registro():
             except IntegrityError:
                 flash("Ese correo ya está registrado.", "error")
 
+            except Error:
+                flash(
+                    "No se pudo registrar la cuenta. Revisa la base de datos.",
+                    "error"
+                )
+
     return render_template("registro.html")
 
 
-# Panel principal: esta ruta faltaba en tu código
+# PANEL PRINCIPAL
 @app.route("/dashboard")
 @iniciar_sesion_requerido
 def dashboard():
-    misiones = consultar_todos("""
+    misiones = consultar_todos(
+        """
         SELECT m.*,
                CONCAT(u.nombre, ' ', u.apellido) AS lider,
                u.id AS lider_id,
@@ -166,7 +174,8 @@ def dashboard():
         FROM misiones m
         JOIN usuarios u ON u.id = m.lider_id
         ORDER BY m.fecha ASC
-    """)
+        """
+    )
 
     return render_template(
         "dashboard.html",
@@ -175,7 +184,7 @@ def dashboard():
     )
 
 
-# Crear una misión
+# CREAR UNA MISIÓN
 @app.route("/nueva", methods=["GET", "POST"])
 @iniciar_sesion_requerido
 def nueva():
@@ -187,29 +196,33 @@ def nueva():
         else:
             nombre, fecha_mision, cantidad, descripcion = datos
 
-            ejecutar("""
-                INSERT INTO misiones
-                (nombre, fecha, voluntarios_necesarios,
-                 descripcion, lider_id)
-                VALUES (%s, %s, %s, %s, %s)
-            """, (
-                nombre,
-                fecha_mision,
-                cantidad,
-                descripcion,
-                session["usuario_id"]
-            ))
+            try:
+                ejecutar(
+                    """
+                    INSERT INTO misiones
+                        (nombre, fecha, voluntarios_necesarios,
+                         descripcion, lider_id)
+                    VALUES (%s, %s, %s, %s, %s)
+                    """,
+                    (
+                        nombre,
+                        fecha_mision,
+                        cantidad,
+                        descripcion,
+                        session["usuario_id"]
+                    )
+                )
 
-            flash("Misión creada correctamente.", "ok")
-            return redirect(url_for("dashboard"))
+                flash("Misión creada correctamente.", "ok")
+                return redirect(url_for("dashboard"))
 
-    return render_template(
-        "nueva.html",
-        hoy=date.today().isoformat()
-    )
+            except Error:
+                flash("No se pudo crear la misión.", "error")
+
+    return render_template("nueva.html", hoy=date.today().isoformat())
 
 
-# Ver los detalles de una misión
+# VER LOS DETALLES DE UNA MISIÓN
 @app.route("/ver/<int:mision_id>")
 @iniciar_sesion_requerido
 def ver_mision(mision_id):
@@ -219,18 +232,21 @@ def ver_mision(mision_id):
         flash("La misión no existe.", "error")
         return redirect(url_for("dashboard"))
 
-    voluntarios = consultar_todos("""
+    voluntarios = consultar_todos(
+        """
         SELECT u.id,
                CONCAT(u.nombre, ' ', u.apellido) AS nombre_completo
         FROM voluntarios v
         JOIN usuarios u ON u.id = v.usuario_id
         WHERE v.mision_id = %s
         ORDER BY v.fecha_inscripcion ASC
-    """, (mision_id,))
+        """,
+        (mision_id,)
+    )
 
     ya_se_unio = any(
-        v["id"] == session["usuario_id"]
-        for v in voluntarios
+        voluntario["id"] == session["usuario_id"]
+        for voluntario in voluntarios
     )
 
     return render_template(
@@ -241,7 +257,7 @@ def ver_mision(mision_id):
     )
 
 
-# Editar una misión
+# EDITAR UNA MISIÓN
 @app.route("/editar/<int:mision_id>", methods=["GET", "POST"])
 @iniciar_sesion_requerido
 def editar(mision_id):
@@ -263,40 +279,43 @@ def editar(mision_id):
         if error:
             flash(error, "error")
             return render_template(
-                "editar.html",
-                mision=mision,
-                hoy=hoy
+                "editar.html", mision=mision, hoy=hoy
             )
 
         nombre, fecha_mision, cantidad, descripcion = datos
 
-        ejecutar("""
-            UPDATE misiones
-            SET nombre = %s,
-                fecha = %s,
-                voluntarios_necesarios = %s,
-                descripcion = %s
-            WHERE id = %s AND lider_id = %s
-        """, (
-            nombre,
-            fecha_mision,
-            cantidad,
-            descripcion,
-            mision_id,
-            session["usuario_id"]
-        ))
+        try:
+            ejecutar(
+                """
+                UPDATE misiones
+                SET nombre = %s,
+                    fecha = %s,
+                    voluntarios_necesarios = %s,
+                    descripcion = %s
+                WHERE id = %s AND lider_id = %s
+                """,
+                (
+                    nombre,
+                    fecha_mision,
+                    cantidad,
+                    descripcion,
+                    mision_id,
+                    session["usuario_id"]
+                )
+            )
 
-        flash("Misión actualizada correctamente.", "ok")
-        return redirect(url_for("ver_mision", mision_id=mision_id))
+            flash("Misión actualizada correctamente.", "ok")
+            return redirect(
+                url_for("ver_mision", mision_id=mision_id)
+            )
 
-    return render_template(
-        "editar.html",
-        mision=mision,
-        hoy=hoy
-    )
+        except Error:
+            flash("No se pudo actualizar la misión.", "error")
+
+    return render_template("editar.html", mision=mision, hoy=hoy)
 
 
-# Eliminar una misión
+# ELIMINAR UNA MISIÓN
 @app.route("/eliminar/<int:mision_id>", methods=["POST"])
 @iniciar_sesion_requerido
 def eliminar(mision_id):
@@ -309,61 +328,28 @@ def eliminar(mision_id):
         flash("Solo el líder puede eliminar esta misión.", "error")
 
     else:
-        ejecutar(
-            "DELETE FROM misiones WHERE id = %s AND lider_id = %s",
-            (mision_id, session["usuario_id"])
-        )
-        flash("Misión eliminada.", "ok")
+        try:
+            ejecutar(
+                "DELETE FROM misiones WHERE id = %s AND lider_id = %s",
+                (mision_id, session["usuario_id"])
+            )
+            flash("Misión eliminada.", "ok")
+
+        except Error:
+            flash(
+                "No se pudo eliminar. Puede tener voluntarios inscritos.",
+                "error"
+            )
 
     return redirect(url_for("dashboard"))
 
 
-# Inscribirse como voluntario
-@app.route("/voluntarme/<int:mision_id>", methods=["POST"])
-@iniciar_sesion_requerido
-def voluntarme(mision_id):
-    mision = obtener_mision(mision_id)
-
-    if not mision:
-        flash("La misión no existe.", "error")
-        return redirect(url_for("dashboard"))
-
-    if mision["total_voluntarios"] >= mision["voluntarios_necesarios"]:
-        flash("Esta misión ya completó sus cupos.", "error")
-    else:
-        try:
-            ejecutar("""
-                INSERT INTO voluntarios (mision_id, usuario_id)
-                VALUES (%s, %s)
-            """, (mision_id, session["usuario_id"]))
-
-            flash("Te has inscrito como voluntario.", "ok")
-
-        except IntegrityError:
-            flash("Ya estás inscrito en esta misión.", "error")
-
-    return redirect(url_for("ver_mision", mision_id=mision_id))
-
-
-# Cancelar inscripción de voluntario
-@app.route("/desvoluntarme/<int:mision_id>", methods=["POST"])
-@iniciar_sesion_requerido
-def desvoluntarme(mision_id):
-    ejecutar("""
-        DELETE FROM voluntarios
-        WHERE mision_id = %s AND usuario_id = %s
-    """, (mision_id, session["usuario_id"]))
-
-    flash("Has cancelado tu participación.", "ok")
-    return redirect(url_for("ver_mision", mision_id=mision_id))
-
-
-# Cerrar sesión
+# CERRAR SESIÓN
 @app.route("/cerrar-sesion", methods=["POST"])
 def cerrar_sesion():
     session.clear()
     flash("Sesión cerrada correctamente.", "ok")
-    return redirect(url_for("index"))
+    return redirect(url_for("iniciar_sesion.html"))
 
 
 if __name__ == "__main__":
