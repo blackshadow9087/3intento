@@ -1,6 +1,7 @@
 from werkzeug.security import generate_password_hash, check_password_hash
 from mysql.connector import IntegrityError
 
+import  app.py
 from conexion import consultar_uno, ejecutar
 
 class Usuario:
@@ -76,6 +77,9 @@ class Usuario:
             """,
             (usuario_id,)
         )      
+        
+        
+    
         
         
     if __name__ == "__main__":

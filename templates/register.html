@@ -11,6 +11,14 @@
 
 <body>
 
+     {% with mensajes = get_flashed_messages(with_categories=true) %}
+        {% if mensajes %}
+            {% for categoria, mensaje in mensajes %}
+                <p>{{ mensaje }}</p>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
 
     <div class="registro">
         <main class="contenedor">
@@ -18,7 +26,7 @@
         <section class="registro">
             <h1>Crear cuenta</h1>
 
-            <form action="{{ url_for('registro') }}" method="POST">
+            <form action="/registro" method="POST">
 
                 <label for="nombre">Nombre:</label>
                 <input type="text" id="nombre" name="nombre" required>
@@ -44,6 +52,50 @@
                     ¿Ya tienes cuenta?
                     <a href="{{ url_for('iniciar_sesion.html') }}">Inicia sesión</a>
                 </p>
+
+                
+    <h1>Iniciar sesión</h1>
+
+    <form action="/iniciar-sesion" method="POST">
+
+        <label for="correo">Correo electrónico:</label>
+        <input
+            type="email"
+            id="correo"
+            name="correo"
+            required
+        >
+
+        <br><br>
+
+        <label for="password">Contraseña:</label>
+        <input
+            type="password"
+            id="password"
+            name="password"
+            required
+        >
+
+        <br><br>
+
+        <button type="submit">Iniciar sesión</button>
+
+    </form>
+
+    <p>¿No tienes cuenta?</p>
+
+    <a href="/register.html">
+        Crear una cuenta
+    </a>
+
+
+
+
+
+
+
+
+
 
             </form>
     </main>

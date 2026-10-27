@@ -17,7 +17,7 @@
         {% endfor %}
     {% endwith %}
 
-    <form action="{{ url_for('iniciar_sesion.html') }}" method="POST">
+    <form action="/iniciar-sesion" method="POST">
 
         <label for="correo">Correo electrónico:</label>
         <input
@@ -45,10 +45,9 @@
 
     <p>¿No tienes cuenta?</p>
 
-    <a href="{{ url_for('register.html') }}">
+    <a href="/register.html">
         Crear una cuenta
     </a>
 
 </body>
 </html>
-```
