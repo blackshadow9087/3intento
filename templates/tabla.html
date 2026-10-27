@@ -1,35 +1,76 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> tabla </title>
+    <title>Tabla de viajes</title>
 </head>
+
 <body>
+
     <header>
-           <h1> tabla </h1>      
-        <div id="botones"> 
-            <button id="agregar" onclick="location.href='/agregar'"> organizar viaje </button> <br><br>
-            <button id="cerrar_sesion" onclick="location.href='/register'"> cerrar sesion </button>
+        <h1>Lista de viajes</h1>
+
+        <div id="botones">
+            <button type="button"
+                    onclick="location.href='/agregar'">
+                Organizar viaje
+            </button>
+
+            <button type="button"
+                    onclick="location.href='/cerrar_sesion'">
+                Cerrar sesión
+            </button>
         </div>
-
-    <table id="viajes">
-
-        <head>
-            <tr>
-                <th> Destino </th><br><br>
-           
-                <th> Organizador </th><br><br>
-          
-                <th> Fecha de inicio </th> <br><br>
-              
-                <th> Fecha de fin </th> <br><br>
-                
-                <th> Acciones </th><bir></bir><bir>
-            </tr>
-        </head>    
-
-    </table>
     </header>
+
+    <main>
+        <table id="viajes">
+
+            <thead>
+                <tr>
+                    <th>Destino</th>
+                    <th>Organizador</th>
+                    <th>Fecha de inicio</th>
+                    <th>Fecha de fin</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for viaje in viajes %}
+                <tr>
+                    <td>{{ viaje.destino }}</td>
+                    <td>{{ viaje.organizador }}</td>
+                    <td>{{ viaje.fecha_inicio }}</td>
+                    <td>{{ viaje.fecha_fin }}</td>
+
+                    <td>
+                        <a href="/ver/{{ viaje.id }}">Ver</a>
+
+                        <a href="/editar/{{ viaje.id }}">Editar</a>
+
+                        <form action="/eliminar/{{ viaje.id }}"
+                              method="POST"
+                              style="display:inline;"
+                              onsubmit="return confirm('¿Eliminar este viaje?');">
+
+                            <button type="submit">Eliminar</button>
+
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5">No hay viajes registrados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+
+        </table>
+    </main>
+
 </body>
 </html>

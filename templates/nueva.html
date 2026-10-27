@@ -1,33 +1,97 @@
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+
+    <title>Agregar misión</title>
 </head>
 <body>
- <h1> agregar mision </h1>
 
-    <div id="botones"> 
-        <button id="volver" onclick="location.href='/'"> volver </button>
-        <button id=" cerrar sesion " onclick="location.href='/register'"> cerrar sesion </button>
-    </div>
+    <main class="contenedor">
 
-    <form action="/agregar" method="post">
-        <label for="destino"> nombre: </label>
-        <input type="text" name="destino" id="destino" required> <br>
-        
-        <label for="fecha_inicio"> Fecha de inicio: </label>
-        <input type="date" name="fecha_inicio" id="fecha_inicio" required> <br>
+        <h1>Agregar misión</h1>
 
-        <label for="fecha_fin"> Fecha de fin: </label>
-        <input type="date" name="fecha_fin" id="fecha_fin" required> <br>
+        <div id="botones">
+            <button type="button"
+                    class="secundario"
+                    onclick="location.href='/'">
+                Volver
+            </button>
 
-        <label for="descripcion"> descripcion: </label>
-        <input type="text" name="descripcion" id="descripcion" required> <br>
+            <form action="/cerrar_sesion" method="POST">
+                <button type="submit" class="secundario">
+                    Cerrar sesión
+                </button>
+            </form>
+        </div>
 
-        <input type="submit" value="Agregar viaje">
+        <form action="/agregar" method="POST">
 
-    
+            <label for="destino">Nombre de la misión:</label>
+            #Este código crea una caja de texto en HTML para que el usuario escriba el nombre de una misión o un destino.
+            <input
+                type="text"
+                name="destino"
+                id="destino"
+                maxlength="120"
+                required
+            >
+
+            <label for="fecha_inicio">Fecha de inicio:</label>
+            <input
+                type="date"
+                name="fecha_inicio"
+                id="fecha_inicio"
+                required
+            >
+
+            <label for="fecha_fin">Fecha de fin:</label>
+            <input
+                type="date"
+                name="fecha_fin"
+                id="fecha_fin"
+                required
+            >
+
+            <label for="descripcion">Descripción:</label>
+            <textarea
+                name="descripcion"
+                id="descripcion"
+                rows="5"
+                maxlength="2000"
+                required
+            ></textarea>
+
+            <button type="submit" class="enviar">
+                Agregar misión
+            </button>
+
+        </form>
+
+    </main>
+
+    <script>
+        const inicio = document.getElementById("fecha_inicio");
+        const fin = document.getElementById("fecha_fin");
+
+        inicio.addEventListener("change", function () {
+            fin.min = inicio.value;
+
+            if (fin.value && fin.value < inicio.value) {
+                fin.value = "";
+            }
+        });
+
+        fin.addEventListener("change", function () {
+            if (inicio.value && fin.value < inicio.value) {
+                alert("La fecha de fin no puede ser anterior a la fecha de inicio.");
+                fin.value = "";
+            }
+        });
+    </script>
+
 </body>
 </html>

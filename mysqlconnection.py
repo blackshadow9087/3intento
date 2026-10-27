@@ -1,51 +1,91 @@
-import pymysql.cursors #Utilizamos un cursos para interactuar con BD
-class MySQLConnection: #Clase que permite generar instancia de conexión con BD
-   def __init__(self, db):
-       connection = pymysql.connect(host = 'localhost',
-                                   user = 'root', 
-                                   password = 'root',
-                                   db = db,
-                                   charset = 'utf8mb4',
-                                   cursorclass = pymysql.cursors.DictCursor,
-                                   autocommit = True)
-       self.connection = connection #Establecemos conexión con BD
-   #El método que se encarga de la consulta   
-   def query_db(self, query, data=None):
-       with self.connection.cursor() as cursor:
-           try:
-               query = cursor.mogrify(query, data)
-               print("Running Query:", query)
-               executable = cursor.execute(query, data)
-               if query.lower().find("insert") >= 0:
-                   # La consulta INSERT regresan el id del nuevo registro
-                   self.connection.commit()
-                   return cursor.lastrowid
-               elif query.lower().find("select") >= 0:
-                   # La consulta SELECT regresa una LISTA DE DICCIONARIOS con los datos
-                   result = cursor.fetchall()
-                   return result
-               else:
-                   # UPDATE y DELETE no regresan nada
-                   self.connection.commit()
-           except Exception as e:
-               # En caso de alguna falla, regresa FALSE
-               print("Something went wrong", e)
-               return False
-           finally:
-               # Cerramos conexión
-               self.connection.close()
-# connectToMySQL recibe el nombre de la base de datos y genera una instancia de MySQLConnection
-def connectToMySQL(db):
-   return MySQLConnection(db)
+import mysql.connector
+from mysql.connector import Error
 
-if __name__ == "__main__":
-   # Prueba de conexión
-   db = "2intento_diagrama"
-   mysql = connectToMySQL(db)
-   query = "SELECT * FROM usuarios;"
-   print(mysql.query_db(query))
 
-   results = mysql.query_db(query)
-   for result in results:
-       print(result)
-        
+def obtener_conexion():
+    """Crea una conexión con la base de datos MySQL."""
+    try:
+        conexion = mysql.connector.connect(
+            host="localhost",
+            user="root",
+            password="",  # Escribe aquí tu contraseña de MySQL
+            database="sistema_misiones"
+        )
+
+        return conexion
+
+    except Error as error:
+        print(f"Error al conectar con MySQL: {error}")
+        return None
+
+
+def consultar_uno(sql, parametros=None):
+    """Obtiene un solo registro de la base de datos."""
+    conexion = obtener_conexion()
+
+    if conexion is None:
+        return None
+
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute(sql, parametros or ())
+        resultado = cursor.fetchone()
+        return resultado
+
+    except Error as error:
+        print(f"Error en la consulta: {error}")
+        return None
+
+    finally:
+        cursor.close()
+        conexion.close()
+
+
+def consultar_todos(sql, parametros=None):
+    """Obtiene todos los registros de la consulta."""
+    conexion = obtener_conexion()
+
+    if conexion is None:
+        return []
+
+    cursor = None
+
+    try:
+        cursor = conexion.cursor(dictionary=True)
+        cursor.execute(sql, parametros or ())
+        return cursor.fetchall()
+
+    except Error as error:
+        print(f"Error en la consulta: {error}")
+        return []
+
+    finally:
+        if cursor:
+            cursor.close()
+        conexion.close()
+
+
+def ejecutar(sql, parametros=None):
+    """Ejecuta INSERT, UPDATE o DELETE."""
+    conexion = obtener_conexion()
+
+    if conexion is None:
+        raise ConnectionError("No se pudo conectar con MySQL.")
+
+    cursor = None
+
+    try:
+        cursor = conexion.cursor()
+        cursor.execute(sql, parametros or ())
+        conexion.commit()
+        return cursor.lastrowid
+
+    except Error as error:
+        conexion.rollback()
+        print(f"Error al ejecutar la operación: {error}")
+        raise
+
+    finally:
+        if cursor:
+            cursor.close()
+        conexion.close()
